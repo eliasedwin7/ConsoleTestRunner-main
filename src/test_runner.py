@@ -43,24 +43,37 @@ class ConsoleTestRunner:
     def run_test(self, test_case):
         """Executes and validates a single test case."""
         logging.info(f"Running test: {test_case['name']}")
-        input_files = [self.environment["input_dir"] / inp for inp in test_case["inputs"]]
+
+        # Ensure inputs and outputs are lists
+        inputs = test_case["inputs"]
+        outputs = test_case["output"]
+        if isinstance(inputs, str):
+            inputs = [inputs]
+        if isinstance(outputs, str):
+            outputs = [outputs]
+
+        input_files = [self.environment["input_dir"] / inp for inp in inputs]
         for inp in input_files:
             ConsoleTestUtils.check_file_exists(inp)
 
-        output_files = [self.environment["output_dir"] / out for out in test_case["outputs"]]
+        output_files = [self.environment["output_dir"] / out for out in outputs]
         tool_args = [
             arg.replace("{INPUT}", str(input_files[idx])) if "{INPUT}" in arg else arg
             for idx, arg in enumerate(test_case["arguments"])
-        ]
+            ]
+
+        # Prepare input and output arguments for the command
+        input_args = " ".join(str(inp) for inp in input_files)
+        output_args = " ".join(str(out) for out in output_files)
 
         # Execute the Console Test Runner
-        ConsoleTestUtils.run_conversion(str(self.environment["executable"]), *tool_args)
-        
+        ConsoleTestUtils.run_conversion(str(self.environment["executable"]),"--input",input_args,"--output", output_args, *tool_args)
+
+
         # Validate outputs
         for output_file in output_files:
             assert output_file.exists(), f"Output file {output_file} does not exist"
         logging.info(f"Test passed: {test_case['name']}")
-
     def run_all_tests(self):
         """Runs all test cases defined in the runspec file."""
         logging.info("Starting all tests")
