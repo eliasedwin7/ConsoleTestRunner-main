@@ -1,62 +1,50 @@
-# My Python Project
+# Console Test Runner
 
-This is a Python project that includes a main application, configuration settings, and utility functions. It is structured to facilitate easy testing and maintenance.
+A command-line test runner that executes tests based on a configuration file (`runspec.json`).
 
-## Project Structure
+## 📂 Project Structure
 
 ```
-my-python-project
-├── src
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config
-│   │   └── config.py
-│   ├── utils
-│   │   └── helpers.py
-├── tests
-│   ├── __init__.py
-│   ├── test_main.py
-│   ├── test_config.py
-│   └── test_helpers.py
-├── requirements.txt
-└── README.md
+ConsoleTestRunner-main/
+├── src/
+│   ├── console_test_runner/
+│   │   ├── __init__.py
+│   │   ├── test_runner.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── helper.py
+│── inputs/
+│   ├── configurations.runspec.json
+│── test_console_runner.py
+│── README.md
+│── setup.py / setup.cfg
 ```
 
-## Setup Instructions
+## 🔧 Setup
 
 1. Clone the repository:
-   ```
+   ```sh
    git clone <repository-url>
+   cd ConsoleTestRunner-main
+   ```
+2. Install dependencies:
+   ```sh
+   pip install -e .
    ```
 
-2. Navigate to the project directory:
-   ```
-   cd my-python-project
-   ```
+## 🚀 Running the Application
 
-3. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-To run the application, execute the following command:
-```
-python src/main.py
+To run the main application:
+```sh
+python .\src\main.py --runspec inputs\configurations.runspec.json
 ```
 
-## Testing
-
-To run the tests, use the following command:
-```
-pytest tests/
+To run tests:
+```sh
+pytest .\test_console_runner.py --runspec=.\inputs\configurations.runspec.json -v
 ```
 
-## Contributing
+## 💎 Contact
 
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+For any issues, reach out to **Edwin Alias** - edwin.alias@seeingmachines.com.
 
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
