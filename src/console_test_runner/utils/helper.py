@@ -10,12 +10,16 @@ import platform
 from os import environ, getcwd
 from typing import List, Optional, Union
 import json
+import os
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+class AuthorizationError(Exception):
+    """Exception raised for authorization errors."""
 
+    pass
 
 class ConsoleTestUtils:
     """Utility class for Console Test Runner"""
@@ -54,16 +58,73 @@ class ConsoleTestUtils:
             os.chmod(directory, 0o755)
 
     @staticmethod
+
     def run_conversion(*args: str) -> str:
-        """Runs the conversion command and returns the output."""
-        logging.info(f"Executing command: {' '.join(args)}")
+        """Runs the conversion command and returns the output.
+
+        Args:
+            *args (str): The command arguments.
+
+        Returns:
+            str: The command output.
+
+        Raises:
+            AuthorizationError: If authorization fails.
+            RuntimeError: If the conversion fails.
+        """
+        print(f"\nRunning command: {' '.join(args)}")
+
+        def monitor_stdout(
+            proc: subprocess.Popen,
+            stop_event: threading.Event,
+            exception_container: List[Exception],
+        ) -> None:
+            try:
+                for line in iter(proc.stdout.readline, ""):
+                    if (
+                        "INTERNAL SM_EXCEPTION:" in line
+                        or "ERROR" in line
+                        or "Error" in line
+                    ):
+                        print(f"Detected error in output: {line.strip()}")
+                        if (
+                            "Failed to authorize" in line
+                            or " Authentication failed" in line
+                        ):
+                            stop_event.set()
+                            proc.terminate()
+                            raise AuthorizationError(line.strip())
+                        stop_event.set()
+                        proc.terminate()
+                        break
+                    print(line, end="")
+            except Exception as e:
+                exception_container.append(e)
+                stop_event.set()
+                proc.terminate()
+
         try:
-            result = subprocess.run(args, capture_output=True, text=True, check=True)
-            logging.info(f"Command output: {result.stdout}")
-            return result.stdout
+            proc = subprocess.Popen(
+                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            stop_event = threading.Event()
+            exception_container: List[Exception] = []
+            monitor_thread = threading.Thread(
+                target=monitor_stdout, args=(proc, stop_event, exception_container)
+            )
+            monitor_thread.start()
+            monitor_thread.join()
+            stdout, stderr = proc.communicate()
+            if exception_container:
+                raise exception_container[0]
+            if proc.returncode != 0 or stop_event.is_set():
+                raise subprocess.CalledProcessError(
+                    proc.returncode, args, output=stdout, stderr=stderr
+                )
+            return stdout
         except subprocess.CalledProcessError as e:
-            logging.error(f"Command execution failed: {e.stderr}")
-            raise RuntimeError(f"Conversion failed: {e.stderr}")
+            e_error = e.stderr if e.stderr else e.output
+            raise RuntimeError(f"Conversion failed: {e_error}")
 
     @staticmethod
     def get_executable(
@@ -83,6 +144,23 @@ class ConsoleTestUtils:
             logging.info(f"Extracting from package: {zip_files[0]}")
             ConsoleTestUtils.extract_package(Path(zip_files[0]), extract_to)
         return ConsoleTestUtils.find_executable(extract_to, executable_name)
+    
+    #TODO: Add the compare_argument method to the ConsoleTestUtils class.
+    @staticmethod
+    def compare_argument(setup_environment,help_argument):
+        """Compares the help argument with the actual output."""
+        env = setup_environment
+        result = subprocess.run(
+            [str(env["executable"]), "--help"], capture_output=True, text=True
+        )
+        actual_output = result.stdout
+     # Normalize whitespace and compare
+        actual_normalized = " ".join(actual_output.split())
+        expected_normalized = " ".join(help_argument.split())
+
+        assert (
+            expected_normalized in actual_normalized
+        ),  f"Mismatch: {actual_normalized} != {expected_normalized}"
 
     @staticmethod
     def delete_generated_packages(
