@@ -4,22 +4,26 @@ import pytest
 from pathlib import Path
 from console_test_runner.utils.helper import ConsoleTestUtils
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class ConsoleTestRunner:
     """Console Test Runner class for executing tests based on configuration."""
+
     def __init__(self, runspec_file: str):
         self.runspec_file = Path(runspec_file)
         assert self.runspec_file.exists(), f"Runspec file {self.runspec_file} not found"
         self.test_config = self.load_config()
         self.environment = self.setup_environment()
-    
+
     def load_config(self):
         """Loads the test configuration from the runspec JSON file."""
         logging.info(f"Loading configuration from {self.runspec_file}")
         with self.runspec_file.open("r") as f:
             return json.load(f)
-    
+
     def setup_environment(self):
         """Sets up the test environment based on JSON configuration."""
         config = self.test_config["general"]
@@ -29,7 +33,9 @@ class ConsoleTestRunner:
         ConsoleTestUtils.ensure_directory_exists(output_dir)
 
         executable_name = config["tool_name"]
-        tool_path = ConsoleTestUtils.get_executable(base_path, base_path / "extracted", executable_name)
+        tool_path = ConsoleTestUtils.get_executable(
+            base_path, base_path / "extracted", executable_name
+        )
         logging.info(f"Executable found at {tool_path}")
         return {
             "executable": tool_path,
@@ -37,7 +43,7 @@ class ConsoleTestRunner:
             "base_path": base_path,
             "input_dir": input_dir,
         }
-    
+
     def run_test(self, test_case):
         """Executes and validates a single test case."""
         logging.info(f"Running test: {test_case['name']}")
@@ -63,7 +69,12 @@ class ConsoleTestRunner:
         output_args = " ".join(str(out) for out in output_files)
 
         ConsoleTestUtils.run_conversion(
-            str(self.environment["executable"]), "--input", input_args, "--output", output_args, *tool_args
+            str(self.environment["executable"]),
+            "--input",
+            input_args,
+            "--output",
+            output_args,
+            *tool_args,
         )
 
         for output_file in output_files:

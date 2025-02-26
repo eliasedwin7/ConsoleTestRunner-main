@@ -12,7 +12,10 @@ from typing import List, Optional, Union
 import json
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class ConsoleTestUtils:
     """Utility class for Console Test Runner"""
@@ -63,13 +66,17 @@ class ConsoleTestUtils:
             raise RuntimeError(f"Conversion failed: {e.stderr}")
 
     @staticmethod
-    def get_executable(main_folder: Path, extract_to: Path, executable_name: str) -> Path:
+    def get_executable(
+        main_folder: Path, extract_to: Path, executable_name: str
+    ) -> Path:
         """Gets the executable, extracting it if necessary."""
         logging.info(f"Retrieving executable: {executable_name}")
         try:
             return ConsoleTestUtils.find_executable(main_folder, executable_name)
         except FileNotFoundError:
-            zip_files = glob.glob(f"**/zip/{executable_name.split('.')[0]}*.zip", recursive=True)
+            zip_files = glob.glob(
+                f"**/zip/{executable_name.split('.')[0]}*.zip", recursive=True
+            )
             if not zip_files:
                 logging.error("No executable or package found.")
                 raise FileNotFoundError("No executable or package found.")
@@ -78,7 +85,9 @@ class ConsoleTestUtils:
         return ConsoleTestUtils.find_executable(extract_to, executable_name)
 
     @staticmethod
-    def delete_generated_packages(option: bool, directories: Union[List[Path], Path]) -> None:
+    def delete_generated_packages(
+        option: bool, directories: Union[List[Path], Path]
+    ) -> None:
         """Deletes the specified directories if option is enabled."""
         if option:
             logging.info(f"Deleting generated packages: {directories}")

@@ -9,7 +9,10 @@ with open("inputs/configurations.runspec.json", "r") as file:
 # Extract test cases and names
 test_cases = [(test["name"], test) for test in runspec_data["tests"]]
 
-@pytest.mark.parametrize("test_name, test_case", test_cases, ids=[t[0] for t in test_cases])
+
+@pytest.mark.parametrize(
+    "test_name, test_case", test_cases, ids=[t[0] for t in test_cases]
+)
 def test_console_runner(test_name, test_case):
     """Runs each test case separately from the runspec file, displaying the test name."""
     runspec_file = "inputs/configurations.runspec.json"
