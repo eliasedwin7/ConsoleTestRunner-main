@@ -2,9 +2,8 @@ import logging
 import json
 import pytest
 from pathlib import Path
-from utils.utils import ConsoleTestUtils
+from console_test_runner.utils.helper import ConsoleTestUtils
 
-# Configure logging to print to console
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 class ConsoleTestRunner:
@@ -29,7 +28,6 @@ class ConsoleTestRunner:
         output_dir = base_path / config["output_folder"]
         ConsoleTestUtils.ensure_directory_exists(output_dir)
 
-        # Locate the executable tool
         executable_name = config["tool_name"]
         tool_path = ConsoleTestUtils.get_executable(base_path, base_path / "extracted", executable_name)
         logging.info(f"Executable found at {tool_path}")
@@ -44,7 +42,6 @@ class ConsoleTestRunner:
         """Executes and validates a single test case."""
         logging.info(f"Running test: {test_case['name']}")
 
-        # Ensure inputs and outputs are lists
         inputs = test_case["inputs"]
         outputs = test_case["output"]
         if isinstance(inputs, str):
@@ -60,20 +57,19 @@ class ConsoleTestRunner:
         tool_args = [
             arg.replace("{INPUT}", str(input_files[idx])) if "{INPUT}" in arg else arg
             for idx, arg in enumerate(test_case["arguments"])
-            ]
+        ]
 
-        # Prepare input and output arguments for the command
         input_args = " ".join(str(inp) for inp in input_files)
         output_args = " ".join(str(out) for out in output_files)
 
-        # Execute the Console Test Runner
-        ConsoleTestUtils.run_conversion(str(self.environment["executable"]),"--input",input_args,"--output", output_args, *tool_args)
+        ConsoleTestUtils.run_conversion(
+            str(self.environment["executable"]), "--input", input_args, "--output", output_args, *tool_args
+        )
 
-
-        # Validate outputs
         for output_file in output_files:
             assert output_file.exists(), f"Output file {output_file} does not exist"
         logging.info(f"Test passed: {test_case['name']}")
+
     def run_all_tests(self):
         """Runs all test cases defined in the runspec file."""
         logging.info("Starting all tests")

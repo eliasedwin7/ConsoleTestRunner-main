@@ -1,6 +1,6 @@
 import argparse
 import logging
-from test_runner import ConsoleTestRunner
+from console_test_runner.test_runner import ConsoleTestRunner
 
 # Configure logging to print to console
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
