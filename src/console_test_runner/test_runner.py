@@ -77,8 +77,10 @@ class ConsoleTestRunner:
             *tool_args,
         )
 
-        for output_file in output_files:
-            assert output_file.exists(), f"Output file {output_file} does not exist"
+        check_output_exist = test_case.get("check_output_exist", True)
+        if check_output_exist:
+            for output_file in output_files:
+                assert output_file.exists(), f"Output file {output_file} does not exist"
         logging.info(f"Test passed: {test_case['name']}")
 
     def run_all_tests(self):
