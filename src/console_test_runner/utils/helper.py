@@ -16,10 +16,13 @@ import os
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+
 class AuthorizationError(Exception):
     """Exception raised for authorization errors."""
 
     pass
+
 
 class ConsoleTestUtils:
     """Utility class for Console Test Runner"""
@@ -58,7 +61,6 @@ class ConsoleTestUtils:
             os.chmod(directory, 0o755)
 
     @staticmethod
-
     def run_conversion(*args: str) -> str:
         """Runs the conversion command and returns the output.
 
@@ -144,23 +146,23 @@ class ConsoleTestUtils:
             logging.info(f"Extracting from package: {zip_files[0]}")
             ConsoleTestUtils.extract_package(Path(zip_files[0]), extract_to)
         return ConsoleTestUtils.find_executable(extract_to, executable_name)
-    
-    #TODO: Add the compare_argument method to the ConsoleTestUtils class.
+
+    # TODO: Add the compare_argument method to the ConsoleTestUtils class.
     @staticmethod
-    def compare_argument(setup_environment,help_argument):
+    def compare_argument(setup_environment, help_argument):
         """Compares the help argument with the actual output."""
         env = setup_environment
         result = subprocess.run(
             [str(env["executable"]), "--help"], capture_output=True, text=True
         )
         actual_output = result.stdout
-     # Normalize whitespace and compare
+        # Normalize whitespace and compare
         actual_normalized = " ".join(actual_output.split())
         expected_normalized = " ".join(help_argument.split())
 
         assert (
             expected_normalized in actual_normalized
-        ),  f"Mismatch: {actual_normalized} != {expected_normalized}"
+        ), f"Mismatch: {actual_normalized} != {expected_normalized}"
 
     @staticmethod
     def delete_generated_packages(
