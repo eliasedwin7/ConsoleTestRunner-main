@@ -149,12 +149,9 @@ class ConsoleTestUtils:
 
     # TODO: Add the compare_argument method to the ConsoleTestUtils class.
     @staticmethod
-    def compare_argument(setup_environment, help_argument):
+    def compare_argument(executable: str, help_argument: str):
         """Compares the help argument with the actual output."""
-        env = setup_environment
-        result = subprocess.run(
-            [str(env["executable"]), "--help"], capture_output=True, text=True
-        )
+        result = subprocess.run([executable, "--help"], capture_output=True, text=True)
         actual_output = result.stdout
         # Normalize whitespace and compare
         actual_normalized = " ".join(actual_output.split())
