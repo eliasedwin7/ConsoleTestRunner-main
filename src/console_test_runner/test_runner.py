@@ -55,13 +55,33 @@ class ConsoleTestRunner:
         if isinstance(outputs, str):
             outputs = [outputs]
 
-        input_files = [self.environment["input_dir"] / inp for inp in inputs]
+        input_files = [
+            (
+                Path(inp).resolve()
+                if Path(inp).is_absolute()
+                else self.environment["input_dir"] / inp
+            )
+            for inp in inputs
+            if inp
+        ]
         for inp in input_files:
             ConsoleTestUtils.check_file_exists(inp)
 
-        output_files = [self.environment["output_dir"] / out for out in outputs]
+        output_files = [
+            (
+                Path(out).resolve()
+                if Path(out).is_absolute()
+                else self.environment["output_dir"] / out
+            )
+            for out in outputs
+            if out
+        ]
         tool_args = [
-            arg.replace("{INPUT}", str(input_files[idx])) if "{INPUT}" in arg else arg
+            (
+                arg.replace("{INPUT}", str(input_files[idx].parent))
+                if "{INPUT}" in arg
+                else arg
+            )
             for idx, arg in enumerate(test_case["arguments"])
         ]
 
