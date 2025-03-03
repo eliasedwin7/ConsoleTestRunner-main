@@ -48,8 +48,8 @@ class ConsoleTestRunner:
         """Executes and validates a single test case."""
         logging.info(f"Running test: {test_case['name']}")
 
-        inputs = test_case["inputs"]
-        outputs = test_case["output"]
+        inputs = test_case.get("inputs", [])
+        outputs = test_case.get("output", [])
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
@@ -68,19 +68,24 @@ class ConsoleTestRunner:
         input_args = " ".join(str(inp) for inp in input_files)
         output_args = " ".join(str(out) for out in output_files)
 
-        ConsoleTestUtils.run_conversion(
-            str(self.environment["executable"]),
-            "--input",
-            input_args,
-            "--output",
-            output_args,
-            *tool_args,
-        )
+        if input_files and output_files:
+            ConsoleTestUtils.run_conversion(
+                str(self.environment["executable"]),
+                "--input",
+                input_args,
+                "--output",
+                output_args,
+                *tool_args,
+            )
 
         check_output_exist = test_case.get("check_output_exist", True)
         if check_output_exist:
             for output_file in output_files:
                 assert output_file.exists(), f"Output file {output_file} does not exist"
+        if "compare_string" in test_case:
+            ConsoleTestUtils.compare_argument(
+                str(self.environment["executable"]), test_case["compare_string"]
+            )
         logging.info(f"Test passed: {test_case['name']}")
 
     def run_all_tests(self):
