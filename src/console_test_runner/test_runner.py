@@ -28,13 +28,13 @@ class ConsoleTestRunner:
         """Sets up the test environment based on JSON configuration."""
         config = self.test_config["general"]
         base_path = Path(config["base_path"]).resolve()
-        input_dir = base_path / config["input_folder"]
-        output_dir = base_path / config["output_folder"]
+        input_dir = Path(config["input_folder"]).resolve()
+        output_dir = Path(config["output_folder"]).resolve()
         ConsoleTestUtils.ensure_directory_exists(output_dir)
 
         executable_name = config["tool_name"]
         tool_path = ConsoleTestUtils.get_executable(
-            base_path, base_path / "extracted", executable_name
+            base_path, base_path, executable_name
         )
         logging.info(f"Executable found at {tool_path}")
         return {
@@ -76,13 +76,16 @@ class ConsoleTestRunner:
             for out in outputs
             if out
         ]
+        # Use the parent directory of the first input file if available, otherwise use the input directory
+        input_dir = (
+            str(input_files[0].parent)
+            if input_files
+            else str(self.environment["input_dir"])
+        )
+
         tool_args = [
-            (
-                arg.replace("{INPUT}", str(input_files[idx].parent))
-                if "{INPUT}" in arg
-                else arg
-            )
-            for idx, arg in enumerate(test_case["arguments"])
+            arg.replace("{INPUT}", input_dir) if "{INPUT}" in arg else arg
+            for arg in test_case["arguments"]
         ]
 
         input_args = " ".join(str(inp) for inp in input_files)

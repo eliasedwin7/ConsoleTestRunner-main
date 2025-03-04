@@ -89,6 +89,9 @@ class ConsoleTestUtils:
                         or "Error" in line
                     ):
                         print(f"Detected error in output: {line.strip()}")
+                        stop_event.set()
+                        proc.terminate()
+                        raise RuntimeError(line.strip())
                         if (
                             "Failed to authorize" in line
                             or " Authentication failed" in line
