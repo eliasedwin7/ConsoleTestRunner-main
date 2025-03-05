@@ -55,6 +55,7 @@ class ConsoleTestRunner:
         logging.info(f"Running test: {test_case['name']}")
         expect_error = test_case.get("expect_error", False)
         dettach_license = test_case.get("dettach_license", False)
+        cleanup = self.test_config["general"].get("cleanup", False)
         license_backup = None
 
         try:
@@ -154,6 +155,11 @@ class ConsoleTestRunner:
             if dettach_license and license_backup:
                 license_backup.rename(self.environment["license_key"])
                 logging.info(f"License key restored from {license_backup}")
+            if cleanup:
+                for output_file in output_files:
+                    if output_file.exists():
+                        output_file.unlink()
+                        logging.info(f"Deleted output file: {output_file}")
 
     def run_all_tests(self):
         """Runs all test cases defined in the runspec file."""
