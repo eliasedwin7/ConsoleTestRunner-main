@@ -37,18 +37,32 @@ class ConsoleTestRunner:
             base_path, base_path, executable_name
         )
         logging.info(f"Executable found at {tool_path}")
-        return {
+
+        environment = {
             "executable": tool_path,
             "output_dir": output_dir,
             "base_path": base_path,
             "input_dir": input_dir,
         }
 
+        if "license_key" in config:
+            environment["license_key"] = Path(config["license_key"]).resolve()
+
+        return environment
+
     def run_test(self, test_case):
         """Executes and validates a single test case."""
         logging.info(f"Running test: {test_case['name']}")
         expect_error = test_case.get("expect_error", False)
+        dettach_license = test_case.get("dettach_license", False)
+        license_backup = None
+
         try:
+            if dettach_license and "license_key" in self.environment:
+                license_backup = self.environment["license_key"].with_suffix(".bak")
+                self.environment["license_key"].rename(license_backup)
+                logging.info(f"License key renamed to {license_backup}")
+
             inputs = test_case.get("inputs", [])
             outputs = test_case.get("output", [])
             if isinstance(inputs, str):
@@ -136,6 +150,10 @@ class ConsoleTestRunner:
             if not expect_error:
                 raise e
             logging.info(f"Test failed as expected: {test_case['name']} - {e}")
+        finally:
+            if dettach_license and license_backup:
+                license_backup.rename(self.environment["license_key"])
+                logging.info(f"License key restored from {license_backup}")
 
     def run_all_tests(self):
         """Runs all test cases defined in the runspec file."""
