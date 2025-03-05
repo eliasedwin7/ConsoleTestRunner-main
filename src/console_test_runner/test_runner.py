@@ -47,60 +47,68 @@ class ConsoleTestRunner:
     def run_test(self, test_case):
         """Executes and validates a single test case."""
         logging.info(f"Running test: {test_case['name']}")
-
-        inputs = test_case.get("inputs", [])
-        outputs = test_case.get("output", [])
-        if isinstance(inputs, str):
-            inputs = [inputs]
-        if isinstance(outputs, str):
-            outputs = [outputs]
-
-        input_files = [
-            (
-                Path(inp).resolve()
-                if Path(inp).is_absolute()
-                else self.environment["input_dir"] / inp
-            )
-            for inp in inputs
-            if inp
-        ]
-        for inp in input_files:
-            ConsoleTestUtils.check_file_exists(inp)
-
-        output_files = [
-            (
-                Path(out).resolve()
-                if Path(out).is_absolute()
-                else self.environment["output_dir"] / out
-            )
-            for out in outputs
-            if out
-        ]
-
-        # Check the flag to determine whether to create the output directory
-        create_output_dir = test_case.get("create_output_dir", True)
-        if create_output_dir:
-            for output_file in output_files:
-                output_file.parent.mkdir(parents=True, exist_ok=True)
-
-        # Use the parent directory of the first input file if available, otherwise use the input directory
-        input_dir = (
-            str(input_files[0].parent)
-            if input_files
-            else str(self.environment["input_dir"])
-        )
-
-        tool_args = [
-            arg.replace("{INPUT}", input_dir) if "{INPUT}" in arg else arg
-            for arg in test_case.get("arguments", [])
-        ]
-
-        input_args = " ".join(str(inp) for inp in input_files)
-        output_args = " ".join(str(out) for out in output_files)
-
         expect_error = test_case.get("expect_error", False)
-
         try:
+            inputs = test_case.get("inputs", [])
+            outputs = test_case.get("output", [])
+            if isinstance(inputs, str):
+                inputs = [inputs]
+            if isinstance(outputs, str):
+                outputs = [outputs]
+
+            input_files = [
+                (
+                    Path(inp).resolve()
+                    if Path(inp).is_absolute()
+                    else self.environment["input_dir"] / inp
+                )
+                for inp in inputs
+                if inp
+            ]
+
+            for inp in input_files:
+                ConsoleTestUtils.check_file_exists(inp)
+
+            output_files = [
+                (
+                    Path(out).resolve()
+                    if Path(out).is_absolute()
+                    else self.environment["output_dir"] / out
+                )
+                for out in outputs
+                if out
+            ]
+
+            # Check the flag to determine whether to create the output directory
+            create_output_dir = test_case.get("create_output_dir", True)
+            if create_output_dir:
+                for output_file in output_files:
+                    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Use the parent directory of the first input file if available, otherwise use the input directory
+            input_dir = (
+                str(input_files[0].parent)
+                if input_files
+                else str(self.environment["input_dir"])
+            )
+
+            tool_args = [
+                arg.replace("{INPUT}", input_dir) if "{INPUT}" in arg else arg
+                for arg in test_case.get("arguments", [])
+            ]
+
+            if (
+                (not inputs or all(not inp for inp in inputs))
+                and (not outputs or all(not out for out in outputs))
+                and (not tool_args or all(not arg for arg in tool_args))
+            ):
+                raise ValueError(
+                    "Inputs, outputs, and arguments are all empty. At least one must be provided."
+                )
+
+            input_args = " ".join(str(inp) for inp in input_files)
+            output_args = " ".join(str(out) for out in output_files)
+
             if input_files and output_files:
                 ConsoleTestUtils.run_conversion(
                     str(self.environment["executable"]),
@@ -124,18 +132,10 @@ class ConsoleTestRunner:
             if expect_error:
                 raise AssertionError("Expected an error but the test passed.")
             logging.info(f"Test passed: {test_case['name']}")
-        except RuntimeError as e:
+        except (RuntimeError, FileNotFoundError, ValueError) as e:
             if not expect_error:
                 raise e
             logging.info(f"Test failed as expected: {test_case['name']} - {e}")
-
-
-def run_all_tests(self):
-    """Runs all test cases defined in the runspec file."""
-    logging.info("Starting all tests")
-    for test_case in self.test_config["tests"]:
-        self.run_test(test_case)
-    logging.info("All tests completed successfully")
 
     def run_all_tests(self):
         """Runs all test cases defined in the runspec file."""
