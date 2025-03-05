@@ -76,6 +76,13 @@ class ConsoleTestRunner:
             for out in outputs
             if out
         ]
+
+        # Check the flag to determine whether to create the output directory
+        create_output_dir = test_case.get("create_output_dir", True)
+        if create_output_dir:
+            for output_file in output_files:
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
         # Use the parent directory of the first input file if available, otherwise use the input directory
         input_dir = (
             str(input_files[0].parent)
@@ -85,31 +92,50 @@ class ConsoleTestRunner:
 
         tool_args = [
             arg.replace("{INPUT}", input_dir) if "{INPUT}" in arg else arg
-            for arg in test_case["arguments"]
+            for arg in test_case.get("arguments", [])
         ]
 
         input_args = " ".join(str(inp) for inp in input_files)
         output_args = " ".join(str(out) for out in output_files)
 
-        if input_files and output_files:
-            ConsoleTestUtils.run_conversion(
-                str(self.environment["executable"]),
-                "--input",
-                input_args,
-                "--output",
-                output_args,
-                *tool_args,
-            )
+        expect_error = test_case.get("expect_error", False)
 
-        check_output_exist = test_case.get("check_output_exist", True)
-        if check_output_exist:
-            for output_file in output_files:
-                assert output_file.exists(), f"Output file {output_file} does not exist"
-        if "compare_string" in test_case:
-            ConsoleTestUtils.compare_argument(
-                str(self.environment["executable"]), test_case["compare_string"]
-            )
-        logging.info(f"Test passed: {test_case['name']}")
+        try:
+            if input_files and output_files:
+                ConsoleTestUtils.run_conversion(
+                    str(self.environment["executable"]),
+                    "--input",
+                    input_args,
+                    "--output",
+                    output_args,
+                    *tool_args,
+                )
+
+            check_output_exist = test_case.get("check_output_exist", True)
+            if check_output_exist:
+                for output_file in output_files:
+                    assert (
+                        output_file.exists()
+                    ), f"Output file {output_file} does not exist"
+            if "compare_string" in test_case:
+                ConsoleTestUtils.compare_argument(
+                    str(self.environment["executable"]), test_case["compare_string"]
+                )
+            if expect_error:
+                raise AssertionError("Expected an error but the test passed.")
+            logging.info(f"Test passed: {test_case['name']}")
+        except RuntimeError as e:
+            if not expect_error:
+                raise e
+            logging.info(f"Test failed as expected: {test_case['name']} - {e}")
+
+
+def run_all_tests(self):
+    """Runs all test cases defined in the runspec file."""
+    logging.info("Starting all tests")
+    for test_case in self.test_config["tests"]:
+        self.run_test(test_case)
+    logging.info("All tests completed successfully")
 
     def run_all_tests(self):
         """Runs all test cases defined in the runspec file."""
