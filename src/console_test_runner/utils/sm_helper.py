@@ -1,6 +1,7 @@
 import platform
 from pathlib import Path
 from inspect import currentframe
+from os import environ
 
 
 class SMHelper:

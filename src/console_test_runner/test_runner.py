@@ -36,21 +36,27 @@ class ConsoleTestRunner:
             root_path = SMHelper.find_xplat_root()
             tool_path = tool_path.replace("{ROOT}", str(root_path))
         if "{RESOLVE_BASE}" in input_dir:
+            input_dir = input_dir.replace("{RESOLVE_BASE}/", "")
+            logging.info(f"Resolving input_dir: {input_dir}")
             base_path = SMHelper.resolve_paths(
                 {
                     "input_local_dir_bool": False,
-                    "input_folder_dir": config["input_folder"],
+                    "input_folder_dir": input_dir,
                 }
             )
-            input_dir = input_dir.replace("{RESOLVE_BASE}", str(base_path))
+            logging.info(f"Resolved base_path for input_dir: {base_path}")
+            input_dir = str(base_path)
         if "{RESOLVE_BASE}" in output_dir:
+            logging.info(f"Resolving output_dir: {output_dir}")
+            output_dir = output_dir.replace("{RESOLVE_BASE}/", "")
             base_path = SMHelper.resolve_paths(
                 {
                     "input_local_dir_bool": False,
-                    "input_folder_dir": config["input_folder"],
+                    "input_folder_dir": output_dir,
                 }
             )
-            output_dir = output_dir.replace("{RESOLVE_BASE}", str(base_path))
+            logging.info(f"Resolved base_path for output_dir: {base_path}")
+            output_dir = str(base_path)
 
         tool_path = Path(tool_path).resolve()
         input_dir = Path(input_dir).resolve()
