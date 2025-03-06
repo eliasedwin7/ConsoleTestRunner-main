@@ -57,6 +57,7 @@ class ConsoleTestRunner:
         dettach_license = test_case.get("dettach_license", False)
         cleanup = self.test_config["general"].get("cleanup", False)
         license_backup = None
+        output_files = []
 
         try:
             if dettach_license and "license_key" in self.environment:

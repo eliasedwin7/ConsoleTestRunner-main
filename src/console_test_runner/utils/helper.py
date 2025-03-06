@@ -197,3 +197,4 @@ class ConsoleTestUtils:
         if not file_path.exists():
             logging.error(f"File not found: {file_path}")
             raise FileNotFoundError(f"File not found: {file_path}")
+        return True
