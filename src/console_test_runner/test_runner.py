@@ -2,6 +2,7 @@ import logging
 import json
 import pytest
 from pathlib import Path
+from console_test_runner.utils.sm_helper import SMHelper
 from console_test_runner.utils.helper import ConsoleTestUtils
 
 logging.basicConfig(
@@ -27,24 +28,51 @@ class ConsoleTestRunner:
     def setup_environment(self):
         """Sets up the test environment based on JSON configuration."""
         config = self.test_config["general"]
-        base_path = Path(config["base_path"]).resolve()
-        input_dir = Path(config["input_folder"]).resolve()
-        output_dir = Path(config["output_folder"]).resolve()
+        tool_path = config["tool_path"]
+        input_dir = config["input_folder"]
+        output_dir = config["output_folder"]
+
+        if "{ROOT}" in tool_path:
+            root_path = SMHelper.find_xplat_root()
+            tool_path = tool_path.replace("{ROOT}", str(root_path))
+        if "{RESOLVE_BASE}" in input_dir:
+            base_path = SMHelper.resolve_paths(
+                {
+                    "input_local_dir_bool": False,
+                    "input_folder_dir": config["input_folder"],
+                }
+            )
+            input_dir = input_dir.replace("{RESOLVE_BASE}", str(base_path))
+        if "{RESOLVE_BASE}" in output_dir:
+            base_path = SMHelper.resolve_paths(
+                {
+                    "input_local_dir_bool": False,
+                    "input_folder_dir": config["input_folder"],
+                }
+            )
+            output_dir = output_dir.replace("{RESOLVE_BASE}", str(base_path))
+
+        tool_path = Path(tool_path).resolve()
+        input_dir = Path(input_dir).resolve()
+        output_dir = Path(output_dir).resolve()
         ConsoleTestUtils.ensure_directory_exists(output_dir)
 
         executable_name = config["tool_name"]
         tool_path = ConsoleTestUtils.get_executable(
-            base_path, base_path, executable_name
+            tool_path, tool_path, executable_name
         )
         logging.info(f"Executable found at {tool_path}")
 
         environment = {
             "executable": tool_path,
             "output_dir": output_dir,
-            "base_path": base_path,
             "input_dir": input_dir,
         }
 
+        if "license_key" in config:
+            environment["license_key"] = Path(config["license_key"]).resolve()
+
+        return environment
         if "license_key" in config:
             environment["license_key"] = Path(config["license_key"]).resolve()
 
