@@ -61,3 +61,25 @@ class SMHelper:
             )
 
         return root_folder
+
+    @staticmethod
+    def resolve_keywords(value):
+        """Recursively resolve {ROOT} and {RESOLVE_BASE} keywords in config values."""
+        if isinstance(value, str):
+            if "{ROOT}" in value:
+                root_path = SMHelper.find_xplat_root()
+                value = value.replace("{ROOT}", str(root_path))
+            if "{RESOLVE_BASE}" in value:
+                base_path = SMHelper.resolve_paths(
+                    {
+                        "input_local_dir_bool": False,
+                        "input_folder_dir": value.replace("{RESOLVE_BASE}/", ""),
+                    }
+                )
+                value = str(base_path)
+        elif isinstance(value, dict):
+            return {key: SMHelper.resolve_keywords(val) for key, val in value.items()}
+        elif isinstance(value, list):
+            return [SMHelper.resolve_keywords(item) for item in value]
+
+        return value

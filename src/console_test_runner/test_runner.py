@@ -26,47 +26,18 @@ class ConsoleTestRunner:
             return json.load(f)
 
     def setup_environment(self):
-        """Sets up the test environment based on JSON configuration."""
+        """Sets up the test environment, resolving paths dynamically."""
+        self.test_config = SMHelper.resolve_keywords(self.test_config)  # Resolve all placeholders
+
         config = self.test_config["general"]
-        tool_path = config["tool_path"]
-        input_dir = config["input_folder"]
-        output_dir = config["output_folder"]
-
-        if "{ROOT}" in tool_path:
-            root_path = SMHelper.find_xplat_root()
-            tool_path = tool_path.replace("{ROOT}", str(root_path))
-        if "{RESOLVE_BASE}" in input_dir:
-            input_dir = input_dir.replace("{RESOLVE_BASE}/", "")
-            logging.info(f"Resolving input_dir: {input_dir}")
-            base_path = SMHelper.resolve_paths(
-                {
-                    "input_local_dir_bool": False,
-                    "input_folder_dir": input_dir,
-                }
-            )
-            logging.info(f"Resolved base_path for input_dir: {base_path}")
-            input_dir = str(base_path)
-        if "{RESOLVE_BASE}" in output_dir:
-            logging.info(f"Resolving output_dir: {output_dir}")
-            output_dir = output_dir.replace("{RESOLVE_BASE}/", "")
-            base_path = SMHelper.resolve_paths(
-                {
-                    "input_local_dir_bool": False,
-                    "input_folder_dir": output_dir,
-                }
-            )
-            logging.info(f"Resolved base_path for output_dir: {base_path}")
-            output_dir = str(base_path)
-
-        tool_path = Path(tool_path).resolve()
-        input_dir = Path(input_dir).resolve()
-        output_dir = Path(output_dir).resolve()
+        tool_path = Path(config["tool_path"]).resolve()
+        input_dir = Path(config["input_folder"]).resolve()
+        output_dir = Path(config["output_folder"]).resolve()
+        
         ConsoleTestUtils.ensure_directory_exists(output_dir)
 
         executable_name = config["tool_name"]
-        tool_path = ConsoleTestUtils.get_executable(
-            tool_path, tool_path, executable_name
-        )
+        tool_path = ConsoleTestUtils.get_executable(tool_path, tool_path, executable_name)
         logging.info(f"Executable found at {tool_path}")
 
         environment = {
@@ -75,10 +46,6 @@ class ConsoleTestRunner:
             "input_dir": input_dir,
         }
 
-        if "license_key" in config:
-            environment["license_key"] = Path(config["license_key"]).resolve()
-
-        return environment
         if "license_key" in config:
             environment["license_key"] = Path(config["license_key"]).resolve()
 
