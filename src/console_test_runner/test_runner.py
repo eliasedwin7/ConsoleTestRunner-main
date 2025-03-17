@@ -109,10 +109,12 @@ class ConsoleTestRunner:
                 else str(self.environment["input_dir"])
             )
 
+
             tool_args = [
                 arg.replace("{INPUT}", input_dir) if "{INPUT}" in arg else arg
                 for arg in test_case.get("arguments", [])
             ]
+            tool_args=SMHelper.resolve_keywords(tool_args)
 
             if (
                 (not inputs or all(not inp for inp in inputs))
